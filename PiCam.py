@@ -7,41 +7,52 @@ import math
 
 datapath = '/home/pi/PycharmProjects/first_test/First-repos/data'
 
-def captureShortSeries(nsteps, maxExposureTime, mode):
+def captureShortSeries(nsteps, maxExposureTime, mode, iso):
 
     global camera
     with picamera.PiCamera() as camera:
         camera.resolution = (1280, 720)
-        fps = float(maxExposureTime**(-1))
+        camera.rotation = 90
+        camera.preview_fullscreen = False
+        camera.preview_window = (1070,475,300,400)
+        fps = float(maxExposureTime**(-1.0))
         camera.framerate = fps
+        camera.iso = iso
         # Wait for the automatic gain control to settle
         time.sleep(2)
+        camera.start_preview()
         # Now fix the values
         camera.exposure_mode = 'off'
         g = camera.awb_gains
-        print g
         camera.awb_mode = 'off'
         camera.awb_gains = g
         # Finally, take several photos with the fixed settings
         for i in range(nsteps+1):
             intervalMode(mode, i, fps, nsteps)
+            time.sleep(2)
             if camera.shutter_speed < 1000:
-                print "Shutter speed: "+str(camera.shutter_speed)+" us."
+                print "["+str(i)+"] Exposure Time: "+str(camera.exposure_speed*1.0)+" us."
+                print "["+str(i)+"] Shutter  Time: "+str(camera.shutter_speed*1.0)+" us."
             if 1000<camera.shutter_speed < 1e6:
-                print "Shutter speed: "+str(camera.shutter_speed/1000)+" ms."
+                print "["+str(i)+"] Exposure Time: "+str(camera.exposure_speed/1000.0)+" ms."
+                print "["+str(i)+"] Shutter  Time: "+str(camera.shutter_speed/1000.0)+" ms."
             if 1e6<camera.shutter_speed:
-                print "Shutter speed: "+str(camera.shutter_speed/1e6)+" s."
-            time.sleep(1)
+                print "["+str(i)+"] Exposure Time: "+str(camera.exposure_speed/1.0e6)+" s."
+                print "["+str(i)+"] Shutter  Time: "+str(camera.shutter_speed/1.0e6)+" s."
+            print "------------------------------------"
             camera.capture_sequence([os.path.join(datapath, 'shortSeries%02d.jpg' % i)])
+        camera.stop_preview()
 
 
 def intervalMode(mode, i, fps, nsteps):
 
         if mode == "linear":
-            camera.shutter_speed =int(i*1e6/(fps*nsteps))
+            shutter_sp = int(i*1.0e6/(fps*nsteps*1.0))
+            camera.shutter_speed = shutter_sp
+
         if mode == "exp":
-            camera.shutter_speed =int(1e6/(fps*nsteps)*math.exp(i/nsteps))
-            print math.exp(i/nsteps)
+            shutter_sp = int(i*1.0e6/(1.0*fps*nsteps*math.exp(1.0))*math.exp(float(i)*nsteps**(-1.0)))
+            camera.shutter_speed = shutter_sp
 
 
 
@@ -92,6 +103,6 @@ def printCameraSettings():
         print settings
 
 
-captureShortSeries(100, 0.1, "exp")
+captureShortSeries(12, 0.25, "exp", 400)
 #printCameraSettings()
 
