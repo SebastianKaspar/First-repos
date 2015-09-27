@@ -5,7 +5,7 @@ import picamera
 import os
 import math
 
-datapath = '/home/pi/PycharmProjects/first_test/First-repos/data'
+datapath = '/mnt/shareWindows'
 
 def captureShortSeries(nsteps, maxExposureTime, mode, iso):
 
